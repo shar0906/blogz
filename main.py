@@ -1,12 +1,14 @@
-from flask import Flask, request, redirect, render_template
+import logging
+from flask import Flask, request, redirect, render_template, url_for
 from flask_sqlalchemy import SQLAlchemy
+
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 app.config['DEBUG'] = True
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://build-a-blog:shableharris@localhost:5000/build-a-blog'
-app.config['SQLALCHEMY_ECHO'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+# app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
-
 
 class Blog(db.Model):
 
@@ -15,38 +17,46 @@ class Blog(db.Model):
     entry = db.Column(db.String(500))
     published = db.Column(db.Boolean)
 
-    def __init__(self, title):
+    def __init__(self, title, entry):
         self.title = title
         self.entry = entry
         self.published = True
 
 
-@app.route('/blog', methods=['POST', 'GET'])
+@app.route("/")
 def index():
+    return redirect('/blog')
+
+@app.route('/blog', methods=['POST', 'GET'])
+def home():
+    published_blogs = Blog.query.filter_by(published=True).all()
+    return render_template('blogs.html',title="Blogs!", published_blogs=published_blogs)
+
+@app.route('/newpost', methods=['GET', 'POST'])
+def newpost():
+    message = "Please enter some text."
+    if request.method == 'GET':
+        return render_template('newpost.html')
 
     if request.method == 'POST':
-        blog_title = request.form['blog']
-        new_blog = Blog(blog_title)
-        db.session.add(new_blog)
-        db.session.commit()
+        if not request.form['blogtitle'] or not request.form['blogbody']:
+            return redirect(url_for('newpost', message=message))
+        else:
+            blog_title = request.form['blogtitle']
+            blog_entry = request.form['blogbody']
+            new_blog = Blog(blog_title, blog_entry)
+            db.session.add(new_blog)
+            db.session.commit()
+            last = Blog.query.all()[-1]
+        return redirect(f'/entries?id={last.id}')
 
-    blogs = Blog.query.filter_by(published=False).all()
-    published_blog = Blog.query.filter_by(published=True).all()
-    return render_template('blogs.html',title="Blogs!", 
-        blogs=blogs, published_blog=published_blog)
 
+@app.route('/entries', methods=['GET'])
 
-@app.route('/delete-blog', methods=['POST'])
-def delete_blog():
-
-    blog_id = int(request.form['blog-id'])
-    blog = Blog.query.get(blog_id)
-    blog.published = True
-    db.session.add(blog)
-    db.session.commit()
-
-    return redirect('/')
-
+def entries():
+    id = int(request.args.get('id'))
+    post = Blog.query.get(id)
+    return render_template('entries.html', post=post)
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=9999)

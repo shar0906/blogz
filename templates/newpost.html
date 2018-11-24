@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>New Blog!</h1>
+<form method='post' action="{{ url_for('newpost') }}">
+    <label>
+        Title:
+        <input type="text" name='blogtitle' />                        
+        <span class="error"> 
+                {% if request.args.get('message') %}
+                {{ request.args.get('message') }}
+                {% endif %}
+        </span>
+    </label>
+</br>
+    <label>
+        Body:
+        <input type="textarea" name='blogbody' />
+        <span class="error"> 
+                {% if request.args.get('message') %}
+                {{ request.args.get('message') }}
+                {% endif %}
+        </span>
+        </label>
+    <input type="submit" value='Add Blog' />
+    
+</form>
+
+{% endblock %}
