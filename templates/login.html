@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Login</title>
+    </head>
+<body>
+    <h1>Login</h1>
+        <form method="post" action="{{ url_for('login') }}">
+            <table>
+                <tr>
+                    <td><label for="username">Username</label></td>
+                    <td>
+                        <input name="username" type="text">
+                    </td>
+                </tr>
+                <tr>
+                    <td><label for="password">Password</label></td>
+                    <td>
+                        <input name="password" type="password">
+                    </td>
+                </tr>
+                <span class="error"> 
+                    {% if request.args.get('message') %}
+                    {{ request.args.get('message') }}
+                    {% endif %}
+                </span>
+            </table>
+            <input type="submit" value="Login">
+            <a href="/signup"><input type="button" value="Create Account"></a>
+        </form>
+    </body>
+</html>
